@@ -1,0 +1,11 @@
+
+        '-codec:v', 'libx264',
+        '-profile:v', 'baseline',
+        '-level', '3.0',
+        '-codec:a', 'aac',
+        '-map', '0',
+        '-pix_fmt', 'yuv420p',
+        '-r', '12',
+        '-g', '16',
+        '-bf', '4',
+        '-f', 'ssegment',

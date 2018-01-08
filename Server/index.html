@@ -1,0 +1,50 @@
+<html>
+	<head>
+		<meta charset="UTF-8">
+    <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
+    <script>
+      function viewPage(userName){
+        location.href = '/Sole/Streaming/index.html?userName=' + userName;
+      }
+
+      function getStreamingList(){
+        var content = document.getElementById('content-view');
+        var fileList = $.get('http://localhost:15000/getStreaming', function(data){
+          data = JSON.parse(data);
+          for(var i=0; i<10 && i < data.length; i++){
+            var element = document.createElement('input');
+            console.log(data[i]);
+            element.setAttribute('id', data[i].userID);
+            element.setAttribute('type', 'button');
+            element.setAttribute('value', data[i].userID);
+            element.style.width = '480px';
+            element.style.height = '80px';
+            element.style.position = 'fixed';
+            element.style.top = 120 * (i + 1) + 50 + 'px';
+            element.setAttribute('onclick', 'viewPage(\'' + data[i].userID + '\')');
+
+            content.appendChild(element);
+          }
+        })
+      }
+
+      window.onload = function(){
+        getStreamingList();
+      }
+    </script>
+
+	 	<title>SOLE Platform</title>
+	</head>
+	<body>
+		<h1> SOLE Platform</h1>
+		<login> 
+    ID <input type = "text" name = ID maxlength = "14"/> 
+    password <input type = "password" name = Password maxlength = "14"/> </login>  
+    <button id="login-button" class="btn btn-default" type="submit">login</button>
+
+    <div id='content-view'>
+
+    </div>
+
+	</body>
+</html>

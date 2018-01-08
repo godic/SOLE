@@ -1,0 +1,25 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Sole</title>
+
+  <link rel="stylesheet" href="css/styles.css">
+  <link href="js/video-js.css" rel="stylesheet">
+  <script src="js/video.js"></script>
+ <script src="js/videojs-contrib-hls.js"></script>
+  <meta charset="UTF-8" />
+</head>
+<body>
+  <div id="content">
+    <div id="content_odd" class="content"></div>
+    <div id="content_even" class="content"></div>
+    <div id="chatting" class="chatDiv">
+      <div id="chat_log" class="chatLog" type="chat" readonly></div>
+      <input id="chat_ID" class="chatInput" maxlength="16" type="text" style="width: 20%;">
+      <input id="chat_message" class="chatInput" type="text" style="width: 60%;">
+      <button class="chatInput" onclick="sendChat()" style="width: 12.5%;">전송</button>
+    </div>
+
+  <script src="js/streaming.js"></script>
+</body>
+</html>
