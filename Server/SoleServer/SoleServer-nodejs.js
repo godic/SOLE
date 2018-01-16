@@ -41,11 +41,12 @@ function getStreaming(res, requestQuery){
     var cnt = 0;
     var list = new Array();
 
-    for(var i=0; cnt<10 && i <= 55; i++){
-        if(room[i] != undefined){
-            list.push(room[i]);
-            cnt++;
-        }
+    for(var index in room){
+        cnt++;
+        list.push(room[index]);
+
+        if(cnt >= 10)
+            break;
     }
 
     res.write(JSON.stringify(list));
@@ -63,6 +64,8 @@ function connectServer(res, requestQuery){
     }
 
     var param = parseQuery(requestQuery);
+
+    console.log(param);
 
     var openPort = idx * 100 + basePort;
     var curStreamers = {
@@ -82,9 +85,11 @@ function connectServer(res, requestQuery){
             streamers:[],
             viewers:[]
         };
+
+        console.log(room);
     }
 
-    room[param['roomName']].streamers[param['userID'] = curStreamers;
+    room[param['roomName']].streamers[param['userID']] = curStreamers;
 
     streamers[idx] = curStreamers;
     for(var i=0; i<room[param['roomName']].viewers.length; i++){
@@ -135,8 +140,11 @@ function findRoom(userID){
 }
 
 function parseQuery(query){
-    var pattern = /[a-z]*=[a-z0-9]*/i;
-    var parsedQuery = pattern.exec(query);
+    //var pattern = /[a-z]+=[a-z0-9]+/gi;
+    var parsedQuery = query.split('&');
+
+    //var parsedQuery = pattern.exec(query);
+    console.log(parsedQuery);
     var obj = {};
     for(var i = 0; i < parsedQuery.length; i++){
         var split = parsedQuery[i].split('=');
@@ -209,20 +217,25 @@ socket.on('request', function(request) {
     var connection = request.accept(null, request.origin);
     console.log(request.origin);
 
-    var data;
+    var roomName;
 
     connection.on('message', function(message) {
         
-        data = JSON.parse(message.utf8Data);
+        var data = JSON.parse(message.utf8Data);
 
         switch(data.op){
             case 'join':
-                var query = parseQuery(data.href);
-                room[query['roomName']].viewers.push(connection);
+                var query = parseQuery(url.parse(data.href).query);
+                roomName = query['roomName'];
+                room[roomName].viewers.push(connection);
+                
+                for(var streamerIdx in room[roomName].streamers){
+                    connection.send(JSON.stringify(room[roomName].streamers[streamerIdx]));
+                }
             break;
             case 'chat':
-                for(var i=0; i<room[data.roomName].viewers.length; i++){
-                    room[data.roomName].viewers[i].send(JSON.stringify(data));
+                for(var i=0; i<room[roomName].viewers.length; i++){
+                    room[roomName].viewers[i].send(JSON.stringify(data));
                 }
             break;
         }
@@ -230,8 +243,8 @@ socket.on('request', function(request) {
     });
 
     connection.on('close', function(connection) {
-        var index = room[data.roomName].viewers.indexOf(connection);
-        room[data.roomName].viewers.splice(index, 1);
+        var index = room[roomName].viewers.indexOf(connection);
+        room[roomName].viewers.splice(index, 1);
 
         console.log('connection closed');
     });

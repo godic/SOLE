@@ -3,8 +3,8 @@
 		<meta charset="UTF-8">
     <script src="https://code.jquery.com/jquery-1.10.2.js"></script>
     <script>
-      function viewPage(userName){
-        location.href = '/Sole/Streaming/index.html?userName=' + userName;
+      function viewPage(roomName){
+        location.href = '/Sole/Streaming/index.html?roomName=' + roomName;
       }
 
       function getStreamingList(){
@@ -13,7 +13,6 @@
           data = JSON.parse(data);
           for(var i=0; i<10 && i < data.length; i++){
             var element = document.createElement('input');
-            console.log(data[i]);
             element.setAttribute('id', data[i].roomName);
             element.setAttribute('type', 'button');
             element.setAttribute('value', data[i].roomName);
