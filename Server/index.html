@@ -14,14 +14,14 @@
           for(var i=0; i<10 && i < data.length; i++){
             var element = document.createElement('input');
             console.log(data[i]);
-            element.setAttribute('id', data[i].userID);
+            element.setAttribute('id', data[i].roomName);
             element.setAttribute('type', 'button');
-            element.setAttribute('value', data[i].userID);
+            element.setAttribute('value', data[i].roomName);
             element.style.width = '480px';
             element.style.height = '80px';
             element.style.position = 'fixed';
             element.style.top = 120 * (i + 1) + 50 + 'px';
-            element.setAttribute('onclick', 'viewPage(\'' + data[i].userID + '\')');
+            element.setAttribute('onclick', 'viewPage(\'' + data[i].roomName + '\')');
 
             content.appendChild(element);
           }

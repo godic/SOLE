@@ -20,6 +20,7 @@ var streamers = new Array(55 + 1);
 
 var clients = [];
 var processes = [];
+var room = [];
 
 http.createServer(function(req, res) {
     var requestURL = url.parse(req.url);
@@ -41,8 +42,8 @@ function getStreaming(res, requestQuery){
     var list = new Array();
 
     for(var i=0; cnt<10 && i <= 55; i++){
-        if(streamers[i] != undefined){
-            list.push(streamers[i]);
+        if(room[i] != undefined){
+            list.push(room[i]);
             cnt++;
         }
     }
@@ -67,17 +68,27 @@ function connectServer(res, requestQuery){
     var curStreamers = {
         port: openPort,
         op: 'newStreaming',
-        userID: param['userID']
+        userID: param['userID'],
+        roomName: param['roomName']
     };
 
     processes[idx] = openFFMPEG(param['userID'], openPort);
 
     var json = JSON.stringify(curStreamers);
 
+    if(room[param['roomName']] == undefined){
+        room[param['roomName']] = {
+            roomName: param['roomName'],
+            streamers:[],
+            viewers:[]
+        };
+    }
+
+    room[param['roomName']].streamers[param['userID'] = curStreamers;
 
     streamers[idx] = curStreamers;
-    for(var i=0; i<clients.length; i++){
-        clients[i].send(json);
+    for(var i=0; i<room[param['roomName']].viewers.length; i++){
+        room[param['roomName']].viewers[i].send(json);
     }
 
     console.log('new connection at port ' + openPort + ' userID ' + param['userID']);
@@ -93,30 +104,32 @@ function disconnectServer(res, requestQuery){
 
     console.log('disconnection at port ' + param['port']);
 
-    var user = findUser(param['port']);
-    if(user != undefined){
-        user.op = 'endStreaming';
-        var json = JSON.stringify(user);
+    var curRoom = findRoom(param['userID']);
+    if(curRoom != undefined){
+        curRoom.op = 'endStreaming';
+        var json = JSON.stringify(curRoom.streamers[param['userID']]);
 
-        for(var i=0; i < clients.length; i++){
-          clients[i].send(json);
+        for(var i=0; i < curRoom.viewers.length; i++){
+          curRoom.viewers[i].send(json);
         }
 
+        curRoom.streamers[param['userID']] = undefined;
+
         var idx = (parseInt(param['port']) - basePort) / 100;
-        streamers[idx] = undefined;
+
         processes[idx].stdin.write('q');
         processes[idx] = null;
 
-        exec('DEL /Q ' + mvSourceRoute_BSlash + '\\' + user.userID + '_*.ts ' + mvSourceRoute_BSlash + '\\' + user.userID + '_*.m3u8');
+        exec('DEL /Q ' + mvSourceRoute_BSlash + '\\' + param['userID'] + '_*.ts ' + mvSourceRoute_BSlash + '\\' + param['userID'] + '_*.m3u8');
     }
 }
 
-function findUser(port){
-    for(var i=0; i<streamers.length;i++){
-        if(streamers[i] == undefined)
+function findRoom(userID){
+    for(var i=0; i<room.length;i++){
+        if(room[i] == undefined)
             continue;
-        else if(streamers[i].port == port){
-            return streamers[i];
+        else if(room[i].streamers[userID] != undefined){
+            return room[i];
         }
     }
 }
@@ -193,39 +206,33 @@ function openFFMPEG(userID, sourcePort){
 }
 
 socket.on('request', function(request) {
-    if(clients.length < 100){
-        var connection = request.accept(null, request.origin);
-        console.log(request.origin);
-        clients.push(connection);
+    var connection = request.accept(null, request.origin);
+    console.log(request.origin);
 
-        for(var i=0; i<streamers.length; i++){
-            if(streamers[i] != undefined){
-                var json = JSON.stringify(streamers[i]);
-                connection.send(json);
-            }
-        }
+    var data;
 
-        connection.on('message', function(message) {
-            
-            var data = JSON.parse(message.utf8Data);
-
-            switch(data.op){
-                case 'chat':
-                    for(var i=0; i<clients.length; i++){
-                        clients[i].send(JSON.stringify(data));
-                    }
-                break;
-            }
+    connection.on('message', function(message) {
         
-        });
+        data = JSON.parse(message.utf8Data);
 
-        connection.on('close', function(connection) {
-            var index = clients.indexOf(connection);
-            clients.splice(index, 1);
+        switch(data.op){
+            case 'join':
+                var query = parseQuery(data.href);
+                room[query['roomName']].viewers.push(connection);
+            break;
+            case 'chat':
+                for(var i=0; i<room[data.roomName].viewers.length; i++){
+                    room[data.roomName].viewers[i].send(JSON.stringify(data));
+                }
+            break;
+        }
+    
+    });
 
-            console.log('connection closed');
-        });
-    }else{
-        request.reject(null, request.origin);
-    }
+    connection.on('close', function(connection) {
+        var index = room[data.roomName].viewers.indexOf(connection);
+        room[data.roomName].viewers.splice(index, 1);
+
+        console.log('connection closed');
+    });
 });

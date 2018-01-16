@@ -17,6 +17,10 @@ function init(){
   var content_even = document.getElementById('content_even');
   
   socket.onopen = function () {
+  	socket.send({
+  		op: join,
+  		href: window.location.href
+  	});
     console.log("websocket connected");
   }
 
