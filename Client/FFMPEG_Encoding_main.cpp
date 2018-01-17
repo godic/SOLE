@@ -7,14 +7,14 @@ extern int videoDeviceNum, audioDeviceNum;
 int main(int argc, char** argv) {
 
 	//Check available Usage
-	if (argc != 4) {
-		cout << "Usage: %s <IP> <ID> <Quality: H(High) M(Medium) L(Low)>" << endl;
+	if (argc != 5) {
+		cout << "Usage: %s <IP> <ID> <RoomName> <Quality: H(High) M(Medium) L(Low)>" << endl;
 		return -1;
 	}
 
 	char resolution[10];
 
-	switch (argv[3][0]) {
+	switch (argv[4][0]) {
 	case 'H':
 		strcpy(resolution, "1280:720");
 		break;
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 	string hostIP = string(argv[1]);
-	map<string, string> query = parseParam("userID=" + string(argv[2]), '&', '=');
+	map<string, string> query = parseParam("userID=" + string(argv[2]) + "&roomName=" + string(argv[3]), '&', '=');
 	unsigned short port = httpRequest(hostIP, "connectServer", query, true);
 
 	string FFMPEG_command = generateFFMPEG_Command(hostIP, port, devices_alternativeName[0][selectedVideoDevice], devices_alternativeName[1][selectedAudioDevice], resolution);
